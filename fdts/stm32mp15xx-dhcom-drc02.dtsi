@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR BSD-3-Clause
+/*
+ * Copyright (C) 2019-2020 Marek Vasut <marex@denx.de>
+ * Copyright (C) 2022 DH electronics GmbH
+ */
+
+/ {
+	aliases {
+		serial0 = &uart4;
+		serial1 = &usart3;
+		/* No serial2 as uart8 is used for RS485 */
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+};
+
+/* TODO: How can we do this in TF-A? */
+&gpioi {
+	/*
+	 * NOTE: The USB Hub on the DRC02 needs a reset signal to be
+	 * pulled high in order to be detected by the USB Controller.
+	 * This signal should be handled by USB power sequencing in
+	 * order to reset the Hub when USB bus is powered down, but
+	 * so far there is no such functionality.
+	 */
+	usb-hub-hog {
+		gpio-hog;
+		gpios = <2 0>;
+		output-high;
+		line-name = "usb-hub-reset";
+	};
+};
+
+/* TODO: Alternative to gpio-hog but no dt pinctrl support for USB??? */
+&pinctrl {
+	usb_hub_rst_pin: usb-hub-reset {
+		pins1 {
+			pinmux = <STM32_PINMUX('I', 2, GPIO)>; /* USB port PWR_EN */
+			output-high;
+		};
+	};
+};
+
+// No boot support on STM312MP1!!!
+//&sdmmc3 {
+//	/*
+//	 * On DRC02, the SoM does not have SDIO WiFi. The pins
+//	 * are used for on-board microSD slot instead.
+//	 */
+//	/delete-property/broken-cd;
+//	cd-gpios = <&gpioi 10 0>;
+//	disable-wp;
+//};
+
+&usart3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&usart3_pins_a>;
+	status = "okay";
+};
+
+/* TODO: Depend on gpio-hog above! */
+&usbphyc {
+	status = "okay";
+};
+
+&usbphyc_port0 {
+	phy-supply = <&vdd_usb>;
+};
+
+&usbphyc_port1 {
+	phy-supply = <&vdd_usb>;
+};

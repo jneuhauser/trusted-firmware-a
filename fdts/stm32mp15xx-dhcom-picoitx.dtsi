@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR BSD-3-Clause
+/*
+ * Copyright (C) 2019-2020 Marek Vasut <marex@denx.de>
+ * Copyright (C) 2022 DH electronics GmbH
+ */
+
+/ {
+	aliases {
+		serial0 = &uart4;
+		serial1 = &usart3;
+		serial2 = &uart8;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+};
+
+/* TODO: How can we do this in TF-A? */
+&gpioa {
+	/*
+	 * NOTE: The USB Port on the PicoITX needs a PWR_EN signal to enable
+	 * port power. This signal should be handled by USB power sequencing
+	 * in order to turn on port power when USB bus is powered up, but so
+	 * far there is no such functionality.
+	 */
+	usb-port-power-hog {
+		gpio-hog;
+		gpios = <13 0>;
+		output-low;
+		line-name = "usb-port-power";
+	};
+};
+
+/* TODO: Alternative to gpio-hog but no dt pinctrl support for USB??? */
+&pinctrl {
+	usb_port_pwr_pin: usb-port-power {
+		pins1 {
+			pinmux = <STM32_PINMUX('A', 13, GPIO)>; /* USB port PWR_EN */
+			output-low;
+		};
+	};
+};
+
+&usart3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&usart3_pins_a>;
+	status = "okay";
+};
+
+&uart8 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart8_pins_a>;
+	status = "okay";
+};
+
+&usbotg_hs {
+	dr_mode = "otg";
+	pinctrl-0 = <&usbotg_hs_pins_a>;
+	pinctrl-names = "default";
+	phy-names = "usb2-phy";
+	phys = <&usbphyc_port1 0>;
+	vbus-supply = <&vbus_otg>;
+	status = "okay";
+};
+
+/* TODO: Depend on gpio-hog above! */
+&usbphyc {
+	status = "okay";
+};
+
+&usbphyc_port0 {
+	phy-supply = <&vdd_usb>;
+};
+
+&usbphyc_port1 {
+	phy-supply = <&vdd_usb>;
+};
